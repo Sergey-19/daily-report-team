@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Công Việc Hàng Ngày</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-5">
+
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">DAILY REPORT - TEAM 10</h1>
+
+        <form id="reportForm" class="space-y-4 mb-8 border-b pb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Thành viên:</label>
+                <select id="memberName" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+                    <option value="">-- Chọn tên của bạn --</option>
+                    <option value="Thành viên 1">Thành viên 1</option>
+                    <option value="Thành viên 2">Thành viên 2</option>
+                    <option value="Thành viên 3">Thành viên 3</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Công việc đã làm hôm nay:</label>
+                <textarea id="workDone" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="- Hoàn thành UI...&#10;- Fix bug..." required></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Khó khăn / Đề xuất (Nếu có):</label>
+                <input type="text" id="issue" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Không có">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 font-semibold">Gửi Báo Cáo</button>
+        </form>
+
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Báo cáo gần đây</h2>
+            <div id="reportList" class="space-y-3">
+                <p class="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // Thay thế bằng cấu hình Firebase của RIÊNG BẠN ở Bước 1
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const reportsRef = ref(db, 'daily_reports');
+
+        // Xử lý gửi form
+        document.getElementById('reportForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('memberName').value;
+            const work = document.getElementById('workDone').value;
+            const issue = document.getElementById('issue').value || "Không có";
+            const timestamp = new Date().toLocaleString('vi-VN');
+
+            // Đẩy dữ liệu lên Firebase
+            const newReportRef = push(reportsRef);
+            set(newReportRef, {
+                name: name,
+                work: work,
+                issue: issue,
+                time: timestamp
+            }).then(() => {
+                alert("Gửi báo cáo thành công!");
+                document.getElementById('reportForm').reset();
+            }).catch((error) => {
+                alert("Lỗi: " + error.message);
+            });
+        });
+
+        // Lắng nghe dữ liệu thay đổi và hiển thị theo thời gian thực
+        onValue(reportsRef, (snapshot) => {
+            const reportListDiv = document.getElementById('reportList');
+            reportListDiv.innerHTML = ''; // Xóa danh sách cũ
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                // Đảo ngược để báo cáo mới nhất lên đầu
+                const reversedReports = Object.values(data).reverse();
+
+                reversedReports.forEach(report => {
+                    const card = document.card = document.createElement('div');
+                    card.className = "p-4 bg-gray-50 border-l-4 border-blue-500 rounded shadow-sm";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-gray-800">${report.name}</span>
+                            <span class="text-xs text-gray-500">${report.time}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 whitespace-pre-line"><strong>Công việc:</strong>\n${report.work}</p>
+                        <p class="text-sm text-red-600 mt-1"><strong>Khó khăn:</strong> ${report.issue}</p>
+                    `;
+                    reportListDiv.appendChild(card);
+                });
+            } else {
+                reportListDiv.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có báo cáo nào được ghi nhận.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
