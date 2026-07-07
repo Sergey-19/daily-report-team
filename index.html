@@ -3,61 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo Cáo Công Việc Hàng Ngày (Google Sheets)</title>
+    <title>Báo Cáo Công Việc Hàng Ngày</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-5">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-5">
 
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold text-center text-green-600 mb-6">DAILY REPORT - GOOGLE SHEETS DB</h1>
-
-        <form id="reportForm" class="space-y-4 mb-8 border-b pb-6">
+    <div id="loginSection" class="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold text-center text-blue-600 mb-6">ĐĂNG NHẬP HỆ THỐNG</h2>
+        <form id="loginForm" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">Thành viên:</label>
-                <select id="memberName" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                    <option value="">-- Chọn tên của bạn --</option>
-                    <option value="Thành viên 1">Thành viên 1</option>
-                    <option value="Thành viên 2">Thành viên 2</option>
-                    <option value="Thành viên 3">Thành viên 3</option>
-                </select>
+                <label class="block text-sm font-medium text-gray-700">Tài khoản:</label>
+                <input type="text" id="loginUser" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Công việc đã làm hôm nay:</label>
-                <textarea id="workDone" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="- Fix bug..." required></textarea>
+                <label class="block text-sm font-medium text-gray-700">Mật khẩu:</label>
+                <input type="password" id="loginPass" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Khó khăn / Đề xuất:</label>
-                <input type="text" id="issue" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Không có">
-            </div>
-            <button type="submit" id="submitBtn" class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 font-semibold">Gửi Báo Cáo</button>
+            <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 font-semibold">Đăng nhập</button>
         </form>
+    </div>
 
-        <div>
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Báo cáo trong ngày</h2>
-            <div id="reportList" class="space-y-3">
-                <p class="text-gray-500 text-center py-4">Đang tải dữ liệu từ Google Sheets...</p>
+    <div id="mainSection" class="max-w-5xl w-full bg-white p-6 rounded-lg shadow-md hidden self-start">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h1 class="text-2xl font-bold text-green-600">DAILY REPORT SYSTEM</h1>
+            <div class="text-right">
+                <p class="text-sm text-gray-600">Xin chào: <span id="userDisplay" class="font-bold text-blue-600">...</span> (<span id="roleDisplay" class="italic text-xs"></span>)</p>
+                <button onclick="logout()" class="text-xs text-red-500 underline hover:text-red-700 mt-1">Đăng xuất</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <h3 class="font-bold text-gray-700 mb-3 border-b pb-1 text-sm uppercase">Gửi báo cáo hôm nay</h3>
+                    <form id="reportForm" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Công việc đã làm:</label>
+                            <textarea id="workDone" rows="3" class="mt-1 block w-full p-2 text-sm border border-gray-300 rounded-md" placeholder="- Việc 1...&#10;- Việc 2..." required></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Khó khăn / Kiến nghị:</label>
+                            <input type="text" id="issue" class="mt-1 block w-full p-2 text-sm border border-gray-300 rounded-md" placeholder="Không có">
+                        </div>
+                        <button type="submit" id="submitBtn" class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 font-semibold text-sm">Gửi Báo Cáo</button>
+                    </form>
+                </div>
+
+                <div id="adminPanel" class="bg-red-50 p-4 rounded-lg border border-red-200 hidden">
+                    <h3 class="font-bold text-red-700 mb-3 border-b border-red-200 text-sm uppercase">Quản lý Thành Viên (Admin)</h3>
+                    <form id="createUserForm" class="space-y-2 mb-4">
+                        <input type="text" id="newUsername" placeholder="Tên tài khoản mới" class="block w-full p-2 text-xs border bg-white rounded-md" required>
+                        <input type="password" id="newPassword" placeholder="Mật khẩu" class="block w-full p-2 text-xs border bg-white rounded-md" required>
+                        <select id="newRole" class="block w-full p-2 text-xs border bg-white rounded-md">
+                            <option value="User">Quyền: User</option>
+                            <option value="Admin">Quyền: Admin</option>
+                        </select>
+                        <button type="submit" class="w-full bg-red-600 text-white p-1.5 rounded-md hover:bg-red-700 font-semibold text-xs">Tạo / Phân Quyền Tài Khoản</button>
+                    </form>
+                    <p class="text-xs font-medium text-gray-600 mb-1">Danh sách tài khoản nhóm:</p>
+                    <div id="adminUserList" class="space-y-1 max-h-40 overflow-y-auto bg-white p-2 border rounded text-xs">
+                        </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Nhật ký báo cáo công việc</h2>
+                <div id="reportList" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                    <p class="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // DÁN URL ỨNG DỤNG WEB CỦA BẠN VÀO ĐÂY
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw45wHNXLtRNNo11kW_3D1KV7KdSyHOlnCPFisJ-Ks_I2op6yU1l72z_GlGiKsArEUjtw/exec";
+        // THAY ĐƯỜNG LINK WEB APP MỚI CỦA BẠN VÀO ĐÂY
+        const SCRIPT_URL = "URL_CỦA_ỨNG_DỤNG_WEB_GOOGLE_APPS_SCRIPT_Ở_BƯỚC_2";
+        
+        let currentUser = null;
+        let currentRole = null;
 
-        // Hàm tải dữ liệu (Đọc từ Sheets)
+        // Xử lý Đăng Nhập
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true; btn.innerText = "Đang kiểm tra...";
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "login",
+                    username: document.getElementById('loginUser').value,
+                    password: document.getElementById('loginPass').value
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.status === "success") {
+                    currentUser = res.username;
+                    currentRole = res.role;
+                    showMainDashboard();
+                } else {
+                    alert(res.message);
+                }
+            })
+            .catch(err => alert("Lỗi kết nối: " + err))
+            .finally(() => { btn.disabled = false; btn.innerText = "Đăng nhập"; });
+        });
+
+        // Chuyển đổi giao diện sang Dashboard chính
+        function showMainDashboard() {
+            document.body.className = "bg-gray-100 min-h-screen p-5 flex items-start justify-center";
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            document.getElementById('userDisplay').innerText = currentUser;
+            document.getElementById('roleDisplay').innerText = currentRole;
+
+            if(currentRole === "Admin") {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadUsersManagement();
+            } else {
+                document.getElementById('adminPanel').classList.add('hidden');
+            }
+            loadReports();
+        }
+
+        // Đăng xuất
+        function logout() {
+            currentUser = null; currentRole = null;
+            document.body.className = "bg-gray-100 min-h-screen flex items-center justify-center p-5";
+            document.getElementById('loginForm').reset();
+            document.getElementById('mainSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // Đọc dữ liệu báo cáo
         function loadReports() {
-            fetch(SCRIPT_URL)
-                .then(response => response.json())
+            document.getElementById('reportList').innerHTML = '<p class="text-gray-500 text-center py-4">Đang cập nhật bảng báo cáo...</p>';
+            fetch(`${SCRIPT_URL}?type=reports`)
+                .then(res => res.json())
                 .then(data => {
-                    const reportListDiv = document.getElementById('reportList');
-                    reportListDiv.innerHTML = '';
-
-                    if(data.length === 0) {
-                        reportListDiv.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có báo cáo nào.</p>';
+                    const list = document.getElementById('reportList');
+                    list.innerHTML = '';
+                    if(!data || data.length === 0) {
+                        list.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có báo cáo nào hôm nay.</p>';
                         return;
                     }
-
-                    // Đảo ngược để báo cáo mới nhất lên đầu
                     data.reverse().forEach(report => {
                         const card = document.createElement('div');
                         card.className = "p-4 bg-gray-50 border-l-4 border-green-500 rounded shadow-sm";
@@ -69,53 +159,93 @@
                             <p class="text-sm text-gray-700 whitespace-pre-line"><strong>Công việc:</strong>\n${report.work}</p>
                             <p class="text-sm text-red-600 mt-1"><strong>Khó khăn:</strong> ${report.issue}</p>
                         `;
-                        reportListDiv.appendChild(card);
+                        list.appendChild(card);
                     });
-                })
-                .catch(error => {
-                    console.error("Lỗi tải dữ liệu:", error);
-                    document.getElementById('reportList').innerHTML = '<p class="text-red-500 text-center py-4">Không thể tải dữ liệu.</p>';
                 });
         }
 
-        // Xử lý gửi báo cáo (Ghi vào Sheets)
+        // Gửi báo cáo công việc
         document.getElementById('reportForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Đang gửi...";
+            const smitBtn = document.getElementById('submitBtn');
+            smitBtn.disabled = true; smitBtn.innerText = "Đang đồng bộ...";
 
             const reportData = {
+                action: "submitReport",
                 time: new Date().toLocaleString('vi-VN'),
-                name: document.getElementById('memberName').value,
+                name: currentUser,
                 work: document.getElementById('workDone').value,
                 issue: document.getElementById('issue').value || "Không có"
             };
 
-            // Gửi dữ liệu tới Google Apps Script bằng phương thức POST
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(reportData)
-            })
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(reportData) })
             .then(res => res.json())
-            .then(result => {
-                if(result.status === "success") {
-                    alert("Gửi báo cáo lên Google Sheets thành công!");
-                    document.getElementById('reportForm').reset();
-                    loadReports(); // Tải lại danh sách
-                } else {
-                    alert("Có lỗi xảy ra: " + result.message);
+            .then(res => {
+                if(res.status === "success") {
+                    document.getElementById('workDone').value = "";
+                    document.getElementById('issue').value = "";
+                    loadReports();
                 }
             })
-            .catch(error => alert("Lỗi kết nối: " + error))
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Gửi Báo Cáo";
+            .catch(err => alert(err))
+            .finally(() => { smitBtn.disabled = false; smitBtn.innerText = "Gửi Báo Cáo"; });
+        });
+
+        // ADMIN: Tải danh sách User để quản lý
+        function loadUsersManagement() {
+            fetch(`${SCRIPT_URL}?type=users`)
+                .then(res => res.json())
+                .then(users => {
+                    const container = document.getElementById('adminUserList');
+                    container.innerHTML = '';
+                    users.forEach(u => {
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center border-b py-1";
+                        div.innerHTML = `
+                            <span><strong>${u.username}</strong> (${u.role})</span>
+                            <button onclick="deleteUser('${u.username}')" class="text-red-500 font-bold hover:underline px-1">Xóa</button>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        // ADMIN: Tạo mới tài khoản hoặc đổi phân quyền User cũ
+        document.getElementById('createUserForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "createUser",
+                    username: document.getElementById('newUsername').value,
+                    password: document.getElementById('newPassword').value,
+                    role: document.getElementById('newRole').value
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                alert(res.status === "success" ? "Xử lý tài khoản thành công!" : res.message);
+                document.getElementById('createUserForm').reset();
+                loadUsersManagement();
             });
         });
 
-        // Chạy tải dữ liệu ngay khi mở trang
-        loadReports();
+        // ADMIN: Xóa tài khoản nhân viên
+        function deleteUser(username) {
+            if(!confirm(`Bạn chắc chắn muốn xóa tài khoản [${username}] không?`)) return;
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "deleteUser", username: username })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.status === "success") {
+                    loadUsersManagement();
+                } else {
+                    alert(res.message);
+                }
+            });
+        }
     </script>
 </body>
 </html>
